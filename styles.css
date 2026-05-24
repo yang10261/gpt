@@ -410,7 +410,8 @@ textarea {
 }
 
 .primary-button:disabled,
-.secondary-button:disabled {
+.secondary-button:disabled,
+.text-button:disabled {
   cursor: not-allowed;
   opacity: 0.58;
 }
@@ -460,7 +461,8 @@ textarea {
   font-weight: 900;
 }
 
-.quest-toggle:disabled {
+.quest-toggle:disabled,
+.danger-button:disabled {
   cursor: not-allowed;
   opacity: 0.5;
 }
