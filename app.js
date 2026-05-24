@@ -23,6 +23,11 @@ const els = {
   checkinMessage: document.querySelector("#checkinMessage"),
   questForm: document.querySelector("#questForm"),
   questTitle: document.querySelector("#questTitle"),
+  multiDateMode: document.querySelector("#multiDateMode"),
+  multiDateHint: document.querySelector("#multiDateHint"),
+  selectedDatesList: document.querySelector("#selectedDatesList"),
+  multiDateQuestTitle: document.querySelector("#multiDateQuestTitle"),
+  multiDateAddButton: document.querySelector("#multiDateAddButton"),
   questList: document.querySelector("#questList"),
   emptyState: document.querySelector("#emptyState"),
   seedButton: document.querySelector("#seedButton")
@@ -35,6 +40,8 @@ let state = {
   profile: { streak: 0, lastCheckin: "" },
   day: { checkedIn: false, quests: [] }
 };
+let multiSelectedDates = new Set();
+let multiDateStatusText = "";
 let daySummaries = {};
 let unsubscribeDay = null;
 let unsubscribeMonth = null;
@@ -82,6 +89,8 @@ function wireEvents() {
   });
   els.checkinButton.addEventListener("click", handleCheckin);
   els.questForm.addEventListener("submit", handleAddQuest);
+  els.multiDateMode.addEventListener("change", handleMultiModeChange);
+  els.multiDateAddButton.addEventListener("click", handleMultiDateAddQuest);
   els.seedButton.addEventListener("click", addSampleQuests);
 }
 
@@ -173,6 +182,15 @@ function createFirebaseStore(db, uid) {
     },
     async setDay(day) {
       await setDoc(dayRef, day, { merge: true });
+    },
+    async addQuestToDate(dateKey, title) {
+      const targetRef = doc(daysRef, dateKey);
+      const daySnap = await getDoc(targetRef);
+      const targetDay = normalizeDay(daySnap.exists() ? daySnap.data() : { checkedIn: false, quests: [] });
+      if (targetDay.quests.some(quest => quest.title === title)) return false;
+      targetDay.quests.push({ id: crypto.randomUUID(), title, completed: false });
+      await setDoc(targetRef, targetDay, { merge: true });
+      return true;
     }
   };
 }
@@ -198,6 +216,17 @@ function createLocalStore() {
       state.day = normalizeDay(day);
       saveLocalState();
       loadDaySummaries();
+    },
+    async addQuestToDate(dateKey, title) {
+      const saved = readLocalState();
+      const targetDay = normalizeDay(saved[dateKey]?.day);
+      if (targetDay.quests.some(quest => quest.title === title)) return false;
+      targetDay.quests.push({ id: crypto.randomUUID(), title, completed: false });
+      saved[dateKey] = { day: targetDay };
+      localStorage.setItem(LOCAL_STATE_KEY, JSON.stringify(saved));
+      if (dateKey === selectedDateKey) state.day = targetDay;
+      loadDaySummaries();
+      return true;
     }
   };
 }
@@ -280,6 +309,43 @@ async function addSampleQuests() {
   render();
 }
 
+function handleMultiModeChange() {
+  if (!els.multiDateMode.checked) {
+    multiSelectedDates.clear();
+  }
+  multiDateStatusText = "";
+  render();
+}
+
+async function handleMultiDateAddQuest() {
+  const title = els.multiDateQuestTitle.value.trim();
+  const targetDates = [...multiSelectedDates].filter(dateKey => dateKey >= todayKey);
+  if (!els.multiDateMode.checked || !targetDates.length) {
+    multiDateStatusText = "請先開啟選取多日，並選擇至少一個今天或未來日期。";
+    renderSelectedDates();
+    return;
+  }
+  if (!title) {
+    multiDateStatusText = "請輸入要加入到多個日期的任務名稱。";
+    renderSelectedDates();
+    return;
+  }
+
+  let addedCount = 0;
+  for (const dateKey of targetDates) {
+    if (await store.addQuestToDate(dateKey, title)) addedCount += 1;
+  }
+
+  if (!firebaseSdk) {
+    loadLocalState();
+  }
+  els.multiDateQuestTitle.value = "";
+  multiDateStatusText = addedCount
+    ? `已將任務加入 ${addedCount} 個選取日期。`
+    : "沒有新增任務，因為選取日期中都已有相同任務。";
+  render();
+}
+
 async function toggleQuest(id) {
   if (selectedDateKey !== todayKey) return;
   const quests = state.day.quests || [];
@@ -308,6 +374,28 @@ function shiftMonth(delta) {
 }
 
 function selectDate(dateKey) {
+  if (els.multiDateMode.checked) {
+    if (dateKey < todayKey) {
+      multiDateStatusText = "過去日期不能加入多日期任務。";
+      renderSelectedDates();
+      return;
+    }
+    multiDateStatusText = "";
+    if (multiSelectedDates.has(dateKey)) {
+      multiSelectedDates.delete(dateKey);
+    } else {
+      multiSelectedDates.add(dateKey);
+    }
+    selectedDateKey = dateKey;
+    visibleMonth = startOfMonth(parseDateKey(dateKey));
+    if (firebaseSdk && store.dayRef) {
+      subscribeSelectedDay();
+    } else {
+      loadLocalState();
+      render();
+    }
+    return;
+  }
   selectedDateKey = dateKey;
   visibleMonth = startOfMonth(parseDateKey(dateKey));
   if (firebaseSdk && store.dayRef) {
@@ -342,6 +430,9 @@ function renderDayPanel() {
   els.questTitle.disabled = !canEditTasks;
   els.questTitle.placeholder = isPast ? "過去日期不能變更任務" : "例如：閱讀 20 分鐘";
   els.questForm.querySelector(".secondary-button").disabled = !canEditTasks;
+  els.multiDateQuestTitle.disabled = !els.multiDateMode.checked || !multiSelectedDates.size;
+  els.multiDateAddButton.disabled = !els.multiDateMode.checked || !multiSelectedDates.size;
+  renderSelectedDates();
   els.seedButton.disabled = !canEditTasks;
 
   els.questList.innerHTML = "";
@@ -388,6 +479,7 @@ function renderCalendar() {
     button.classList.toggle("outside-month", date.getMonth() !== monthStart.getMonth());
     button.classList.toggle("today", dateKey === todayKey);
     button.classList.toggle("selected", dateKey === selectedDateKey);
+    button.classList.toggle("multi-selected", multiSelectedDates.has(dateKey));
     button.classList.toggle("all-complete", canShowStatusColor && summary.total > 0 && summary.completed === summary.total);
     button.classList.toggle("none-complete", canShowStatusColor && summary.total > 0 && summary.completed === 0);
     button.classList.toggle("part-complete", canShowStatusColor && summary.completed > 0 && summary.completed < summary.total);
@@ -399,6 +491,28 @@ function renderCalendar() {
     button.addEventListener("click", () => selectDate(dateKey));
     els.calendarGrid.append(button);
   }
+}
+
+function renderSelectedDates() {
+  const dates = [...multiSelectedDates].sort();
+  els.selectedDatesList.innerHTML = "";
+  els.multiDateHint.textContent =
+    multiDateStatusText ||
+    (els.multiDateMode.checked && dates.length
+      ? `已選取 ${dates.length} 個日期。`
+      : "開啟後，在月曆點選多個今天或未來日期。");
+
+  dates.forEach(dateKey => {
+    const chip = document.createElement("button");
+    chip.className = "date-chip";
+    chip.type = "button";
+    chip.textContent = formatShortDate(parseDateKey(dateKey));
+    chip.addEventListener("click", () => {
+      multiSelectedDates.delete(dateKey);
+      render();
+    });
+    els.selectedDatesList.append(chip);
+  });
 }
 
 function getCheckinMessage(isToday) {
@@ -455,6 +569,14 @@ function formatDisplayDate(date) {
     month: "long",
     day: "numeric",
     weekday: "long"
+  }).format(date);
+}
+
+function formatShortDate(date) {
+  return new Intl.DateTimeFormat("zh-Hant-TW", {
+    month: "numeric",
+    day: "numeric",
+    weekday: "short"
   }).format(date);
 }
 
