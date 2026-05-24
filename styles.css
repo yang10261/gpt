@@ -114,7 +114,13 @@ h2 {
   grid-template-columns: repeat(2, 1fr);
 }
 
-.calendar-layout {
+.top-dashboard {
+  display: grid;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.workspace-layout {
   display: grid;
   grid-template-columns: minmax(320px, 420px) 1fr;
   gap: 16px;
@@ -216,6 +222,11 @@ h2 {
 .calendar-day.selected {
   background: var(--blue);
   color: white;
+}
+
+.calendar-day.multi-selected {
+  outline: 3px solid rgba(33, 90, 142, 0.28);
+  outline-offset: -3px;
 }
 
 .calendar-day.selected .day-note,
@@ -340,7 +351,7 @@ label,
 
 .quest-layout {
   display: grid;
-  grid-template-columns: 330px 1fr;
+  grid-template-columns: 1fr;
   gap: 16px;
   align-items: start;
 }
@@ -381,6 +392,56 @@ textarea {
   resize: vertical;
   font-family: Consolas, "Courier New", monospace;
   font-size: 0.92rem;
+}
+
+.multi-date-add {
+  display: grid;
+  gap: 10px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+
+.multi-date-add h2 {
+  margin: 0;
+}
+
+.toggle-row {
+  display: inline-flex;
+  grid-auto-flow: column;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink);
+  font-size: 0.9rem;
+}
+
+.toggle-row input {
+  width: 18px;
+  height: 18px;
+}
+
+.helper-text {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.84rem;
+  line-height: 1.5;
+}
+
+.selected-dates {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-height: 28px;
+}
+
+.date-chip {
+  min-height: 28px;
+  border: 1px solid rgba(33, 90, 142, 0.28);
+  background: rgba(33, 90, 142, 0.08);
+  color: var(--blue);
+  border-radius: 999px;
+  padding: 0 10px;
+  font-size: 0.82rem;
+  font-weight: 800;
 }
 
 .primary-button,
@@ -529,7 +590,7 @@ textarea {
   }
 
   .status-grid,
-  .calendar-layout,
+  .workspace-layout,
   .quest-layout {
     grid-template-columns: 1fr;
   }
