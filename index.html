@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Daily Quest Board</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <script type="module" src="./app.js"></script>
+  </head>
+  <body>
+    <main class="shell">
+      <section class="hero" aria-labelledby="app-title">
+        <div>
+          <p class="eyebrow">月曆任務板</p>
+          <h1 id="app-title">Daily Quest Board</h1>
+          <p class="subtitle">用月份檢視安排每日任務，點選日期就能規畫當天的待辦事項。</p>
+        </div>
+        <button class="icon-button" id="settingsButton" type="button" aria-label="Firebase 設定" title="Firebase 設定">
+          <span aria-hidden="true">⚙</span>
+        </button>
+      </section>
+
+      <section class="calendar-layout">
+        <section class="calendar-panel" aria-label="月曆檢視">
+          <div class="calendar-toolbar">
+            <button class="icon-button" id="prevMonthButton" type="button" aria-label="上一個月" title="上一個月">
+              <span aria-hidden="true">‹</span>
+            </button>
+            <h2 id="monthTitle">月份</h2>
+            <button class="icon-button" id="nextMonthButton" type="button" aria-label="下一個月" title="下一個月">
+              <span aria-hidden="true">›</span>
+            </button>
+          </div>
+          <div class="weekday-row" aria-hidden="true">
+            <span>日</span>
+            <span>一</span>
+            <span>二</span>
+            <span>三</span>
+            <span>四</span>
+            <span>五</span>
+            <span>六</span>
+          </div>
+          <div class="calendar-grid" id="calendarGrid"></div>
+        </section>
+
+        <section class="day-panel" aria-label="日期任務">
+          <section class="status-grid compact" aria-label="選取日期狀態">
+            <article class="stat-panel">
+              <span>連續簽到</span>
+              <strong><span id="streakValue">0</span> 天</strong>
+            </article>
+            <article class="stat-panel">
+              <span>當日完成</span>
+              <strong id="completedValue">0 / 0</strong>
+            </article>
+          </section>
+
+          <section class="progress-panel" aria-label="當日進度">
+            <div class="progress-copy">
+              <span id="selectedDateLabel">今日</span>
+              <strong id="progressLabel">0 / 0 任務完成</strong>
+            </div>
+            <div class="progress-track" aria-hidden="true">
+              <span id="progressBar"></span>
+            </div>
+          </section>
+
+          <section class="checkin-panel" aria-labelledby="checkin-title">
+            <div>
+              <h2 id="checkin-title">每日簽到</h2>
+              <p id="checkinMessage">今天還沒有簽到。完成簽到可累積連勝。</p>
+            </div>
+            <button class="primary-button" id="checkinButton" type="button">簽到</button>
+          </section>
+
+          <section class="quest-layout">
+            <form class="quest-form" id="questForm">
+              <h2>新增當日任務</h2>
+              <label>
+                任務名稱
+                <input id="questTitle" name="questTitle" type="text" maxlength="56" placeholder="例如：閱讀 20 分鐘" required />
+              </label>
+              <button class="secondary-button" type="submit">加入任務</button>
+            </form>
+
+            <section class="quest-list-panel" aria-labelledby="quest-list-title">
+              <div class="section-heading">
+                <h2 id="quest-list-title">當日任務</h2>
+                <button class="text-button" id="seedButton" type="button">加入範例</button>
+              </div>
+              <div class="quest-list" id="questList"></div>
+              <p class="empty-state" id="emptyState">這天尚未建立任務。點選日期後，新增想完成的小目標。</p>
+            </section>
+          </section>
+        </section>
+      </section>
+    </main>
+
+    <dialog class="settings-dialog" id="settingsDialog">
+      <form method="dialog" class="settings-card">
+        <div class="section-heading">
+          <h2>Firebase 設定</h2>
+          <button class="icon-button" value="cancel" aria-label="關閉" title="關閉" type="submit">
+            <span aria-hidden="true">×</span>
+          </button>
+        </div>
+        <p class="settings-note">貼上 Firebase Web App 的 config 物件。未設定時會使用本機示範模式。</p>
+        <textarea id="firebaseConfig" spellcheck="false" placeholder='{
+  "apiKey": "...",
+  "authDomain": "...",
+  "projectId": "...",
+  "appId": "..."
+}'></textarea>
+        <div class="settings-actions">
+          <button class="text-button" id="clearConfigButton" type="button">清除設定</button>
+          <button class="primary-button" id="saveConfigButton" value="default" type="button">儲存</button>
+        </div>
+        <p class="connection-state" id="connectionState">本機示範模式</p>
+      </form>
+    </dialog>
+  </body>
+</html>
