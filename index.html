@@ -20,7 +20,38 @@
         </button>
       </section>
 
-      <section class="calendar-layout">
+      <section class="top-dashboard" aria-label="日期狀態">
+        <section class="status-grid compact" aria-label="選取日期狀態">
+          <article class="stat-panel">
+            <span>連續簽到</span>
+            <strong><span id="streakValue">0</span> 天</strong>
+          </article>
+          <article class="stat-panel">
+            <span>當日完成</span>
+            <strong id="completedValue">0 / 0</strong>
+          </article>
+        </section>
+
+        <section class="progress-panel" aria-label="當日進度">
+          <div class="progress-copy">
+            <span id="selectedDateLabel">今日</span>
+            <strong id="progressLabel">0 / 0 任務完成</strong>
+          </div>
+          <div class="progress-track" aria-hidden="true">
+            <span id="progressBar"></span>
+          </div>
+        </section>
+
+        <section class="checkin-panel" aria-labelledby="checkin-title">
+          <div>
+            <h2 id="checkin-title">每日簽到</h2>
+            <p id="checkinMessage">今天還沒有簽到。完成簽到可累積連勝。</p>
+          </div>
+          <button class="primary-button" id="checkinButton" type="button">簽到</button>
+        </section>
+      </section>
+
+      <section class="workspace-layout">
         <section class="calendar-panel" aria-label="月曆檢視">
           <div class="calendar-toolbar">
             <button class="icon-button" id="prevMonthButton" type="button" aria-label="上一個月" title="上一個月">
@@ -44,45 +75,32 @@
         </section>
 
         <section class="day-panel" aria-label="日期任務">
-          <section class="status-grid compact" aria-label="選取日期狀態">
-            <article class="stat-panel">
-              <span>連續簽到</span>
-              <strong><span id="streakValue">0</span> 天</strong>
-            </article>
-            <article class="stat-panel">
-              <span>當日完成</span>
-              <strong id="completedValue">0 / 0</strong>
-            </article>
-          </section>
-
-          <section class="progress-panel" aria-label="當日進度">
-            <div class="progress-copy">
-              <span id="selectedDateLabel">今日</span>
-              <strong id="progressLabel">0 / 0 任務完成</strong>
+          <form class="quest-form" id="questForm">
+            <h2>新增當日任務</h2>
+            <label>
+              任務名稱
+              <input id="questTitle" name="questTitle" type="text" maxlength="56" placeholder="例如：閱讀 20 分鐘" required />
+            </label>
+            <button class="secondary-button" type="submit">加入任務</button>
+            <div class="multi-date-add">
+              <div class="section-heading">
+                <h2>多日期同任務</h2>
+                <label class="toggle-row">
+                  <input id="multiDateMode" type="checkbox" />
+                  選取多日
+                </label>
+              </div>
+              <p class="helper-text" id="multiDateHint">開啟後，在月曆點選多個今天或未來日期。</p>
+              <div class="selected-dates" id="selectedDatesList"></div>
+              <label>
+                共同任務名稱
+                <input id="multiDateQuestTitle" type="text" maxlength="56" placeholder="例如：每天閱讀 20 分鐘" />
+              </label>
+              <button class="secondary-button" id="multiDateAddButton" type="button">加入到選取日期</button>
             </div>
-            <div class="progress-track" aria-hidden="true">
-              <span id="progressBar"></span>
-            </div>
-          </section>
-
-          <section class="checkin-panel" aria-labelledby="checkin-title">
-            <div>
-              <h2 id="checkin-title">每日簽到</h2>
-              <p id="checkinMessage">今天還沒有簽到。完成簽到可累積連勝。</p>
-            </div>
-            <button class="primary-button" id="checkinButton" type="button">簽到</button>
-          </section>
+          </form>
 
           <section class="quest-layout">
-            <form class="quest-form" id="questForm">
-              <h2>新增當日任務</h2>
-              <label>
-                任務名稱
-                <input id="questTitle" name="questTitle" type="text" maxlength="56" placeholder="例如：閱讀 20 分鐘" required />
-              </label>
-              <button class="secondary-button" type="submit">加入任務</button>
-            </form>
-
             <section class="quest-list-panel" aria-labelledby="quest-list-title">
               <div class="section-heading">
                 <h2 id="quest-list-title">當日任務</h2>
