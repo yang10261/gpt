@@ -252,6 +252,7 @@ async function handleCheckin() {
 
 async function handleAddQuest(event) {
   event.preventDefault();
+  if (selectedDateKey < todayKey) return;
   const title = els.questTitle.value.trim();
   if (!title) return;
   const quest = {
@@ -267,6 +268,7 @@ async function handleAddQuest(event) {
 }
 
 async function addSampleQuests() {
+  if (selectedDateKey < todayKey) return;
   const existingTitles = new Set((state.day.quests || []).map(quest => quest.title));
   const quests = sampleQuests
     .filter(title => !existingTitles.has(title))
@@ -293,6 +295,7 @@ async function toggleQuest(id) {
 }
 
 async function deleteQuest(id) {
+  if (selectedDateKey < todayKey) return;
   const day = { ...state.day, quests: (state.day.quests || []).filter(quest => quest.id !== id) };
   await store.setDay(day);
   state.day = day;
@@ -325,6 +328,8 @@ function renderDayPanel() {
   const completed = quests.filter(quest => quest.completed).length;
   const percent = quests.length ? Math.round((completed / quests.length) * 100) : 0;
   const isToday = selectedDateKey === todayKey;
+  const isPast = selectedDateKey < todayKey;
+  const canEditTasks = selectedDateKey >= todayKey;
 
   els.streakValue.textContent = Number(state.profile.streak || 0);
   els.completedValue.textContent = `${completed} / ${quests.length}`;
@@ -334,6 +339,10 @@ function renderDayPanel() {
   els.checkinButton.disabled = !isToday || Boolean(state.day.checkedIn);
   els.checkinButton.textContent = state.day.checkedIn ? "已簽到" : "簽到";
   els.checkinMessage.textContent = getCheckinMessage(isToday);
+  els.questTitle.disabled = !canEditTasks;
+  els.questTitle.placeholder = isPast ? "過去日期不能變更任務" : "例如：閱讀 20 分鐘";
+  els.questForm.querySelector(".secondary-button").disabled = !canEditTasks;
+  els.seedButton.disabled = !canEditTasks;
 
   els.questList.innerHTML = "";
   els.emptyState.classList.toggle("visible", quests.length === 0);
@@ -341,13 +350,14 @@ function renderDayPanel() {
   quests.forEach(quest => {
     const card = document.createElement("article");
     const canComplete = selectedDateKey === todayKey && !quest.completed;
+    const canDelete = selectedDateKey >= todayKey;
     card.className = `quest-card${quest.completed ? " completed" : ""}`;
     card.innerHTML = `
       <button class="quest-toggle" type="button" aria-label="完成 ${escapeHtml(quest.title)}" ${canComplete ? "" : "disabled"}>${quest.completed ? "✓" : "+"}</button>
       <div>
         <div class="quest-title">${escapeHtml(quest.title)}</div>
       </div>
-      <button class="danger-button" type="button" aria-label="刪除 ${escapeHtml(quest.title)}">×</button>
+      <button class="danger-button" type="button" aria-label="刪除 ${escapeHtml(quest.title)}" ${canDelete ? "" : "disabled"}>×</button>
     `;
     card.querySelector(".quest-toggle").addEventListener("click", () => toggleQuest(quest.id));
     card.querySelector(".danger-button").addEventListener("click", () => deleteQuest(quest.id));
